@@ -31,9 +31,9 @@ final class AppModel: ObservableObject {
 
     private let local = MiIOLocalClient(device: PlugDevice.bedroom)
     private let cloud = MiCloudClient(
-        userID: "2919764168",
-        ssecurity: "wf95BjbA7aznFYjHRXrl6A==",
-        serviceToken: "GGI25hKo4Isgfh2e51qBlIEJU7+4V4wTahNA60J+AJDhBdEadrCun2BPwoYbzSrcmMrUwUD9XORibPAF/FiJeeRwPujMPVaHtqW7ijsZjt3SAg9El3iC15tNZH0TPrIe8+/9Fnmiaz+wTENYBVEcWAjnQH88TFhZWG9Ac5nvGk0="
+        userID: MiCredentials.userID,
+        ssecurity: MiCredentials.ssecurity,
+        serviceToken: MiCredentials.serviceToken
     )
 
     // MARK: - 查询

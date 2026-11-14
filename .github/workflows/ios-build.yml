@@ -39,6 +39,42 @@ jobs:
           bash scripts/install-xcodegen.sh
           echo "/usr/local/bin" >> "$GITHUB_PATH"
 
+      - name: Inject credentials from secrets
+        env:
+          MI_USER_ID: ${{ secrets.MI_USER_ID }}
+          MI_SSECURITY: ${{ secrets.MI_SSECURITY }}
+          MI_SERVICE_TOKEN: ${{ secrets.MI_SERVICE_TOKEN }}
+          MI_CLOUD_DID: ${{ secrets.MI_CLOUD_DID }}
+          MI_LOCAL_IP: ${{ secrets.MI_LOCAL_IP }}
+          MI_LOCAL_TOKEN: ${{ secrets.MI_LOCAL_TOKEN }}
+          MI_DEVICE_ID_HEX: ${{ secrets.MI_DEVICE_ID_HEX }}
+        run: |
+          set -euo pipefail
+          TARGET="MiPlug/Core/Model/MiCredentials.swift"
+          python3 - <<'PY'
+          import os
+          target = "MiPlug/Core/Model/MiCredentials.swift"
+          mapping = {
+              "__MI_USER_ID__": os.environ["MI_USER_ID"],
+              "__MI_SSECURITY__": os.environ["MI_SSECURITY"],
+              "__MI_SERVICE_TOKEN__": os.environ["MI_SERVICE_TOKEN"],
+              "__MI_CLOUD_DID__": os.environ["MI_CLOUD_DID"],
+              "__MI_LOCAL_IP__": os.environ["MI_LOCAL_IP"],
+              "__MI_LOCAL_TOKEN__": os.environ["MI_LOCAL_TOKEN"],
+              "__MI_DEVICE_ID_HEX__": os.environ["MI_DEVICE_ID_HEX"],
+          }
+          src = open(target, encoding="utf-8").read()
+          for ph, val in mapping.items():
+              if not val:
+                  raise SystemExit(f"secret missing for placeholder {ph}")
+              src = src.replace(ph, val)
+          # 确认没有占位符残留
+          if "__MI_" in src:
+              raise SystemExit("placeholder left unreplaced")
+          open(target, "w", encoding="utf-8").write(src)
+          print("credentials injected ok")
+          PY
+
       - name: Build unsigned ipa
         run: bash scripts/build-unsigned-ipa.sh
 

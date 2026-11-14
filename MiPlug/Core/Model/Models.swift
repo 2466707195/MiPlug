@@ -17,10 +17,10 @@ struct PlugDevice: Hashable {
     static let bedroom = PlugDevice(
         name: "卧室插座",
         model: "yutai.plug.socn1",
-        cloudDID: "2053096533",
-        localIP: "192.168.10.9",
-        localToken: "4eaf452e7d8d83cd23dd8b34a405a48b",
-        deviceIDHex: "7A5FC455"
+        cloudDID: MiCredentials.cloudDID,
+        localIP: MiCredentials.localIP,
+        localToken: MiCredentials.localToken,
+        deviceIDHex: MiCredentials.deviceIDHex
     )
 }
 
