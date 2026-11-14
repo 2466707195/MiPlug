@@ -44,7 +44,10 @@ struct MiCloudClient {
 
     // MARK: - RC4
 
-    private static func rc4(_ key: [UInt8], _ input: [UInt8]) -> [UInt8] {
+    /// RC4 是流密码：KSA 初始化 S 盒后，PRGA 在**同一状态流**上连续推进。
+    /// priming（空转 1024 字节）必须和真正的数据在同一个实例里连续加密，
+    /// 分两次调用会各自重置 S 盒 → priming 白做 → 密文与服务端预期完全不符。
+    private static func rc4Primed(_ key: [UInt8], _ input: [UInt8]) -> [UInt8] {
         var s = Array(0..<256)
         var j: Int = 0
         for i in 0..<256 {
@@ -55,6 +58,14 @@ struct MiCloudClient {
         out.reserveCapacity(input.count)
         var i: Int = 0
         j = 0
+        // 同一状态流：先空转 1024 字节（推进状态、丢弃输出）
+        for _ in 0..<1024 {
+            i = (i + 1) & 0xFF
+            j = (j + Int(s[i])) & 0xFF
+            s.swapAt(i, j)
+            _ = s[(Int(s[i]) + Int(s[j])) & 0xFF]
+        }
+        // 紧接着加密真正的数据（状态延续，不重置）
         for byte in input {
             i = (i + 1) & 0xFF
             j = (j + Int(s[i])) & 0xFF
@@ -62,12 +73,6 @@ struct MiCloudClient {
             out.append(byte ^ UInt8(s[(Int(s[i]) + Int(s[j])) & 0xFF]))
         }
         return out
-    }
-
-    /// 与官方实现一致：先空转 1024 字节
-    private static func rc4Primed(_ key: [UInt8], _ input: [UInt8]) -> [UInt8] {
-        _ = rc4(key, [UInt8](repeating: 0, count: 1024))
-        return rc4(key, input)
     }
 
     // MARK: - 编解码辅助
