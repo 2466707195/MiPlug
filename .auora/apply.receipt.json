@@ -1,0 +1,55 @@
+{
+  "schema": "auora.receipt/1",
+  "run_id": "20261114T152000Z-f3eeff36",
+  "app_id": "miplug",
+  "targets": [
+    "ios"
+  ],
+  "written": [
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/Contents.json",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-60@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20~ipad.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20~ipad@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29~ipad.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29~ipad@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40~ipad.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40~ipad@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-83.5@2x~ipad.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-1024~ios-marketing.png"
+  ],
+  "unchanged": [],
+  "patched": [],
+  "skipped_patches": [],
+  "created_files": [
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-1024~ios-marketing.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20~ipad.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-20~ipad@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29~ipad.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-29~ipad@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40~ipad.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-40~ipad@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-60@2x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png",
+    "MiPlug/Assets.xcassets/AppIcon.appiconset/AppIcon-83.5@2x~ipad.png"
+  ],
+  "backup_dir": ".auora/backups/20261114T152000Z-f3eeff36",
+  "backups": [
+    ".auora/backups/20261114T152000Z-f3eeff36/MiPlug/Assets.xcassets/AppIcon.appiconset/Contents.json"
+  ],
+  "warnings": [],
+  "dry_run": false,
+  "applied": true
+}
