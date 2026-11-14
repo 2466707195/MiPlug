@@ -142,7 +142,7 @@ struct MiCloudClient {
         let signature = Self.b64encode(Self.sha1(Self.signString("POST", path, sn, encParams)))
 
         // 组表单
-        let form = URLComponents()
+        var form = URLComponents()
         form.queryItems = [
             URLQueryItem(name: "data", value: dataEnc),
             URLQueryItem(name: "rc4_hash__", value: rc4HashEnc),

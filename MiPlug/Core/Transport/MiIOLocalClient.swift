@@ -315,12 +315,12 @@ final class DatagramSocket {
 }
 
 // fd_set 操作（Darwin 的 fd_set 是元组，没法直接下标，用内存操作实现）
-private func __darwin_fd_zero(_ set: UnsafeMutablePointer<fd_set>) {
-    withUnsafeMutableBytes(of: set.pointee) { $0.initializeMemory(as: UInt8.self, repeating: 0) }
+private func __darwin_fd_zero(_ set: inout fd_set) {
+    withUnsafeMutableBytes(of: &set) { $0.initializeMemory(as: UInt8.self, repeating: 0) }
 }
 
-private func __darwin_fd_set(_ fd: Int32, _ set: UnsafeMutablePointer<fd_set>) {
-    withUnsafeMutableBytes(of: &set.pointee) { raw in
+private func __darwin_fd_set(_ fd: Int32, _ set: inout fd_set) {
+    withUnsafeMutableBytes(of: &set) { raw in
         let byteIdx = Int(fd / 8)
         guard byteIdx < raw.count else { return }
         raw[byteIdx] |= UInt8(1 << (fd % 8))
