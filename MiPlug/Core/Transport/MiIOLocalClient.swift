@@ -99,11 +99,11 @@ struct MiIOLocalClient {
 
     // MARK: - 包构造
 
-    /// hello: magic(2) + len=32(2) + unknown=0(4) + devid(4) + ts(4) + 其余全FF
+    /// hello: 必须严格 32 字节 = magic(2)+len(2)+unknown(4)+devid(4)+ts(4)+checksum(16)
+    /// 后 28 字节全部 0xFF（与 python-miio / 实测脚本一致，长度错了设备不响应）
     private static let hello: [UInt8] = {
         var p: [UInt8] = [0x21, 0x31, 0x00, 0x20]
-        p += [UInt8](repeating: 0, count: 8)
-        p += [UInt8](repeating: 0xFF, count: 24)
+        p += [UInt8](repeating: 0xFF, count: 28)
         return p
     }()
 

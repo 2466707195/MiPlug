@@ -27,7 +27,17 @@ final class AppModel: ObservableObject {
     @Published var lastError: String?
     @Published var busy = false
 
+    // 定时 / 场景 / 记录
+    @Published var timer: LocalTimer?
+    @Published var timerLoading = false
+    @Published var scenes: [MiScene] = []
+    @Published var scenesLoading = false
+    @Published var runningScene: String?
+    @Published var messages: [MiMessage] = []
+    @Published var messagesLoading = false
+
     let device = PlugDevice.bedroom
+    let homeID = "97001615862"
 
     private let local = MiIOLocalClient(device: PlugDevice.bedroom)
     private let cloud = MiCloudClient(
@@ -190,4 +200,114 @@ final class AppModel: ObservableObject {
     func refreshOnLaunch() {
         refresh()
     }
+
+    // MARK: - 定时
+
+    func loadTimer() {
+        guard !timerLoading else { return }
+        timerLoading = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            do {
+                let t = try self.cloud.readLocalTimer(device: self.device)
+                await MainActor.run {
+                    self.timer = t
+                    self.timerLoading = false
+                }
+            } catch {
+                let msg = error.localizedDescription
+                await MainActor.run {
+                    self.timer = nil
+                    self.timerLoading = false
+                    self.lastError = "读取定时失败：\(msg)"
+                }
+            }
+        }
+    }
+
+    func saveTimer(_ t: LocalTimer) {
+        timerLoading = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            do {
+                try self.cloud.writeLocalTimer(t, device: self.device)
+                let confirmed = try self.cloud.readLocalTimer(device: self.device)
+                await MainActor.run {
+                    self.timer = confirmed ?? t
+                    self.timerLoading = false
+                }
+            } catch {
+                let msg = error.localizedDescription
+                await MainActor.run {
+                    self.timerLoading = false
+                    self.lastError = "保存定时失败：\(msg)"
+                }
+            }
+        }
+    }
+
+    // MARK: - 场景
+
+    func loadScenes() {
+        guard !scenesLoading else { return }
+        scenesLoading = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            do {
+                let list = try self.cloud.listScenes(homeID: self.homeID)
+                await MainActor.run {
+                    self.scenes = list
+                    self.scenesLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.scenesLoading = false
+                }
+            }
+        }
+    }
+
+    func runScene(_ scene: MiScene) {
+        guard runningScene == nil else { return }
+        runningScene = scene.id
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            do {
+                try self.cloud.runScene(sceneID: scene.id)
+                await MainActor.run {
+                    self.runningScene = nil
+                    self.toastText = "已执行「\(scene.name)」"
+                }
+            } catch {
+                let msg = error.localizedDescription
+                await MainActor.run {
+                    self.runningScene = nil
+                    self.lastError = "执行失败：\(msg)"
+                }
+            }
+        }
+    }
+
+    // MARK: - 记录
+
+    func loadMessages() {
+        guard !messagesLoading else { return }
+        messagesLoading = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            do {
+                let list = try self.cloud.fetchMessages(homeID: self.homeID, device: self.device)
+                await MainActor.run {
+                    self.messages = list
+                    self.messagesLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.messagesLoading = false
+                }
+            }
+        }
+    }
+
+    @Published var toastText: String?
 }
