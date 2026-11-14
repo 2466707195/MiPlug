@@ -360,6 +360,36 @@ struct MiCloudClient {
             return MiMessage(text: msg, timestamp: ts)
         }
     }
+
+    // MARK: - 响应解析
+
+    /// 从 {"result":[{"value":...,"code":0}]} 提取 value
+    private static func extractValue(_ resp: JSONValue) -> Bool? {
+        guard case .object(let root) = resp,
+              case .array(let items)? = root["result"],
+              case .object(let first)? = items.first else { return nil }
+        guard case .int(let code)? = first["code"], code == 0 else { return nil }
+        switch first["value"] {
+        case .bool(let b): return b
+        case .int(let i): return i != 0
+        case .double(let d): return d != 0
+        default: return nil
+        }
+    }
+
+    /// 提取失败信息（顶层 message != ok 或 item code != 0）
+    private static func extractError(_ resp: JSONValue) -> String? {
+        guard case .object(let root) = resp else { return nil }
+        if case .string(let msg)? = root["message"], msg != "ok" {
+            return msg
+        }
+        if case .array(let items)? = root["result"], let first = items.first,
+           case .object(let dict) = first,
+           case .int(let code)? = dict["code"], code != 0 {
+            return "设备错误码 \(code)"
+        }
+        return nil
+    }
 }
 
 // MARK: - 本地定时 0xAA 二进制协议（已实测破解）
@@ -442,35 +472,4 @@ struct MiMessage: Identifiable, Hashable {
     let text: String
     let timestamp: Int64
     var id: String { "\(timestamp)-\(text)" }
-}
-
-    // MARK: - 响应解析
-
-    /// 从 {"result":[{"value":...,"code":0}]} 提取 value
-    private static func extractValue(_ resp: JSONValue) -> Bool? {
-        guard case .object(let root) = resp,
-              case .array(let items)? = root["result"],
-              case .object(let first)? = items.first else { return nil }
-        guard case .int(let code)? = first["code"], code == 0 else { return nil }
-        switch first["value"] {
-        case .bool(let b): return b
-        case .int(let i): return i != 0
-        case .double(let d): return d != 0
-        default: return nil
-        }
-    }
-
-    /// 提取失败信息（顶层 message != ok 或 item code != 0）
-    private static func extractError(_ resp: JSONValue) -> String? {
-        guard case .object(let root) = resp else { return nil }
-        if case .string(let msg)? = root["message"], msg != "ok" {
-            return msg
-        }
-        if case .array(let items)? = root["result"], let first = items.first,
-           case .object(let dict) = first,
-           case .int(let code)? = dict["code"], code != 0 {
-            return "设备错误码 \(code)"
-        }
-        return nil
-    }
 }
