@@ -46,15 +46,13 @@ struct HistoryScreen: View {
                             Spacer()
                         }
                     } else {
-                        NativeSection {
+                        NativeSection(nil, footer: "记录保存在米家云端，与米家 App 看到的一致。") {
                             NativeRowList {
                                 ForEach(Array(model.messages.enumerated()), id: \.element.id) { idx, msg in
                                     if idx > 0 { NativeDivider() }
                                     messageRow(msg)
                                 }
                             }
-                        } footer: {
-                            Text("记录保存在米家云端，与米家 App 看到的一致。")
                         }
                         .padding(.top, 4)
                     }

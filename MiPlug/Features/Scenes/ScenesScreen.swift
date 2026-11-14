@@ -47,15 +47,13 @@ struct ScenesScreen: View {
                             Spacer()
                         }
                     } else {
-                        NativeSection {
+                        NativeSection(nil, footer: "场景由米家云端执行，需要插座在线。") {
                             NativeRowList {
                                 ForEach(Array(model.scenes.enumerated()), id: \.element.id) { idx, scene in
                                     if idx > 0 { NativeDivider() }
                                     sceneRow(scene)
                                 }
                             }
-                        } footer: {
-                            Text("场景由米家云端执行，需要插座在线。")
                         }
                         .padding(.top, 4)
                     }
