@@ -59,7 +59,7 @@ struct MiCloudClient {
             i = (i + 1) & 0xFF
             j = (j + Int(s[i])) & 0xFF
             s.swapAt(i, j)
-            out.append(byte ^ s[(Int(s[i]) + Int(s[j])) & 0xFF])
+            out.append(byte ^ UInt8(s[(Int(s[i]) + Int(s[j])) & 0xFF]))
         }
         return out
     }
@@ -123,7 +123,7 @@ struct MiCloudClient {
         let sn = Self.b64encode(snBytes)
 
         // data 明文
-        guard let dataPlain = try? JSONSerialization.data(withJSONObject: JSONValue.toAny(dataObj)),
+        guard let dataPlain = try? JSONSerialization.data(withJSONObject: JSONValue.jsonAny(dataObj)),
               let dataStr = String(data: dataPlain, encoding: .utf8) else {
             throw MiCloudError.badResponse
         }
@@ -142,7 +142,7 @@ struct MiCloudClient {
         let signature = Self.b64encode(Self.sha1(Self.signString("POST", path, sn, encParams)))
 
         // 组表单
-        var form = URLComponents()
+        let form = URLComponents()
         form.queryItems = [
             URLQueryItem(name: "data", value: dataEnc),
             URLQueryItem(name: "rc4_hash__", value: rc4HashEnc),
@@ -153,7 +153,7 @@ struct MiCloudClient {
 
         var req = URLRequest(url: url, timeoutInterval: 15)
         req.httpMethod = "POST"
-        req.httpBody = form.percentEncodedQuery.data(using: .utf8)
+        req.httpBody = form.percentEncodedQuery?.data(using: .utf8)
         req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         req.setValue("PROTOCAL-HTTP2", forHTTPHeaderField: "x-xiaomi-protocal-flag-cli")
         req.setValue("ENCRYPT-RC4", forHTTPHeaderField: "MIOT-ENCRYPT-ALGORITHM")
@@ -198,8 +198,8 @@ struct MiCloudClient {
         task.resume()
         semaphore.wait()
 
-        if let err { throw err }
-        guard let resp = outResponse else { throw outError ?? MiCloudError.badResponse }
+        if let outError { throw outError }
+        guard let resp = outResponse else { throw MiCloudError.badResponse }
         return resp
     }
 

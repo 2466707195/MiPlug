@@ -151,7 +151,7 @@ struct MiIOLocalClient {
         let resp = try udpRound(packet)
         guard resp.count > 32 else { throw MiIOError.timeout }
         let cipher = Array(resp[16..<(resp.count - 16)])
-        let plain = try decryptPayload(cipher)
+        var plain = try decryptPayload(cipher)
         while plain.last == 0x00 { plain = Array(plain.dropLast()) }
         guard let obj = JSONValue.parse(Data(plain)) else {
             throw MiIOError.decryptFailed
@@ -167,7 +167,7 @@ struct MiIOLocalClient {
             "piid": .int(1)
         ])])
         let resp = try send(method: "get_properties", params: prop, deviceTS: deviceTS)
-        if case .array(let items)? = resp, let first = items.first,
+        if case .array(let items) = resp, let first = items.first,
            case .object(let dict) = first,
            let v = dict["value"] {
             switch v {
@@ -239,7 +239,11 @@ enum JSONValue {
         return Array(data)
     }
 
-    private static func anyFrom(_ v: JSONValue) -> Any {
+    static func jsonAny(_ v: JSONValue) -> Any {
+        return anyFrom(v)
+    }
+
+    static func anyFrom(_ v: JSONValue) -> Any {
         switch v {
         case .null: return NSNull()
         case .bool(let b): return b
@@ -296,10 +300,8 @@ final class DatagramSocket {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             var readSet = fd_set()
-            withUnsafeMutablePointer(to: &readSet) { setPtr in
-                __darwin_fd_zero(setPtr)
-                __darwin_fd_set(fd, setPtr)
-            }
+            __darwin_fd_zero(&readSet)
+            __darwin_fd_set(fd, &readSet)
             var remaining = deadline.timeIntervalSinceNow
             var tv = timeval(tv_sec: Int(remaining), tv_usec: Int32((remaining.truncatingRemainder(dividingBy: 1)) * 1_000_000))
             let ready = select(fd + 1, &readSet, nil, nil, &tv)

@@ -106,11 +106,11 @@ public enum NativeUI {
     /// 次要文字行距
     public static let lineSpacingSecondary: CGFloat = 2
 
-    // MARK: - 阴影（全屏唯一一处）
+    // MARK: - 阴影（全屏唯一一处：悬浮输入胶囊）
 
-    public static let islandShadowColor = Color.black.opacity(0.06)
-    public static let islandShadowRadius: CGFloat = 18
-    public static let islandShadowY: CGFloat = 8
+    public static let composerShadowColor = Color.black.opacity(0.06)
+    public static let composerShadowRadius: CGFloat = 18
+    public static let composerShadowY: CGFloat = 8
 
     // MARK: - 动效
 

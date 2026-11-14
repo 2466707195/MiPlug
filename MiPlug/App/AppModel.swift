@@ -172,13 +172,14 @@ final class AppModel: ObservableObject {
                 }
             } catch {
                 let msg = error.localizedDescription
+                let failed: PlugChannel = via
                 await MainActor.run {
                     self.state = .unknown
                     self.lastError = "两条通道都失败了：\(msg)"
-                    if via == .local {
-                        await MainActor.run { self.localStatus = .unavailable }
+                    if failed == .local {
+                        self.localStatus = .unavailable
                     } else {
-                        await MainActor.run { self.cloudStatus = .unavailable }
+                        self.cloudStatus = .unavailable
                     }
                 }
             }
