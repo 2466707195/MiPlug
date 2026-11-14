@@ -101,7 +101,8 @@ struct MiCloudClient {
         return out
     }
 
-    private static func signString(_ method: String, _ path: String, _ sn: String, _ params: [String: String]) -> String {
+    /// 签名串：method & path & k=v...（保持传入顺序）& signedNonce
+    private static func signString(_ method: String, _ path: String, _ sn: String, _ params: [(String, String)]) -> String {
         var parts = [method.uppercased(), path.replacingOccurrences(of: "/app/", with: "/")]
         for (k, v) in params { parts.append("\(k)=\(v)") }
         parts.append(sn)
@@ -137,7 +138,8 @@ struct MiCloudClient {
         }
 
         // 第一轮签名：rc4_hash__（对明文 params 签）
-        let plainParams = ["data": dataStr]
+        // 注意：签名串的参数顺序必须与最终表单顺序一致，用有序数组而非字典（Swift 字典遍历无序 → 签名随机失败）
+        let plainParams: [(String, String)] = [("data", dataStr)]
         let rc4Hash = Self.b64encode(Self.sha1(Self.signString("POST", path, sn, plainParams)))
 
         // RC4 加密
@@ -145,8 +147,8 @@ struct MiCloudClient {
         let dataEnc = Self.b64encode(Self.rc4Primed(key, Array(dataStr.utf8)))
         let rc4HashEnc = Self.b64encode(Self.rc4Primed(key, Array(rc4Hash.utf8)))
 
-        // 第二轮签名：signature（对密文 params 签）
-        let encParams = ["data": dataEnc, "rc4_hash__": rc4HashEnc]
+        // 第二轮签名：signature（对密文 params 签，顺序 = 表单顺序）
+        let encParams: [(String, String)] = [("data", dataEnc), ("rc4_hash__", rc4HashEnc)]
         let signature = Self.b64encode(Self.sha1(Self.signString("POST", path, sn, encParams)))
 
         // 组表单。
