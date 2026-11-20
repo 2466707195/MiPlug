@@ -84,7 +84,7 @@ struct SettingsScreen: View {
                             NativeRow(
                                 icon: "info.circle",
                                 title: "版本",
-                                detail: "0.1.0",
+                                detail: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?",
                                 showsChevron: false
                             )
                         }
