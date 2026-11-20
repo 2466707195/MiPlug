@@ -16,12 +16,14 @@ import CommonCrypto
 
 enum MiCloudError: Error, LocalizedError {
     case badResponse
+    case diagnostic(String)
     case http(Int, String)
     case api(String)
 
     var errorDescription: String? {
         switch self {
         case .badResponse: return "云端响应格式异常"
+        case .diagnostic(let m): return "云端诊断: \(m)"
         case .http(let code, let msg): return "云端 HTTP \(code): \(msg)"
         case .api(let m): return m
         }
@@ -43,6 +45,28 @@ struct MiCloudClient {
     }
 
     // MARK: - RC4
+
+    /// 不空转的 RC4（服务端某些返回通道会用裸 RC4；诊断/兼容用）
+    private static func rc4(_ key: [UInt8], _ input: [UInt8]) -> [UInt8] {
+        guard !key.isEmpty else { return [] }
+        var s = Array(0..<256)
+        var j = 0
+        for i in 0..<256 {
+            j = (j + s[i] + Int(key[i % key.count])) & 0xFF
+            s.swapAt(i, j)
+        }
+        var out: [UInt8] = []
+        out.reserveCapacity(input.count)
+        var i = 0
+        j = 0
+        for byte in input {
+            i = (i + 1) & 0xFF
+            j = (j + s[i]) & 0xFF
+            s.swapAt(i, j)
+            out.append(byte ^ UInt8(s[(s[i] + s[j]) & 0xFF]))
+        }
+        return out
+    }
 
     /// RC4 是流密码：KSA 初始化 S 盒后，PRGA 在**同一状态流**上连续推进。
     /// priming（空转 1024 字节）必须和真正的数据在同一个实例里连续加密，
@@ -204,13 +228,45 @@ struct MiCloudClient {
                 outError = MiCloudError.http(http.statusCode, String(data: data.prefix(200), encoding: .utf8) ?? "")
                 return
             }
-            // RC4 解密响应：响应体是 b64 文本，先解码再 RC4（与官方 decrypt_rc4 一致）
-            guard let text = String(data: data, encoding: .utf8),
-                  let cipher = Data(base64Encoded: text) else {
-                outError = MiCloudError.badResponse; return
+            // 响应解密（带逐段诊断）：
+            // 1) 有些错误响应直接是明文 JSON；
+            // 2) 正常响应是 base64 文本 → RC4 解密 → JSON。
+            // 若所有候选都失败，把原始响应片段和各候选的前几个字节带进错误文案，
+            // 这样手机上能直接看到究竟卡在 b64、RC4 还是 JSON 解析。
+            let raw = String(data: data.prefix(120), encoding: .utf8) ?? "<binary>"
+            let text = (String(data: data, encoding: .utf8) ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            var parsed: JSONValue?
+            var notes: [String] = []
+
+            if let plain = JSONValue.parse(Data(text.utf8)) {
+                parsed = plain
+                notes.append("plainJSON")
+            } else if let cipher = Data(base64Encoded: text, options: .ignoreUnknownCharacters) {
+                let variants: [(String, [UInt8])] = [
+                    ("primed/keyB64", Self.rc4Primed(Self.b64decode(sn), Array(cipher))),
+                    ("plain/keyB64", Self.rc4(Self.b64decode(sn), Array(cipher))),
+                    ("primed/keyText", Self.rc4Primed(Array(sn.utf8), Array(cipher))),
+                ]
+                for (tag, bytes) in variants {
+                    if let j = JSONValue.parse(Data(bytes)) {
+                        parsed = j
+                        notes.append(tag + "/OK")
+                        break
+                    }
+                    let preview = String(bytes: bytes.prefix(20), encoding: .utf8)?
+                        .filter { $0.isASCII && $0.isPrintable } ?? ""
+                    notes.append(tag + "/no:" + preview)
+                }
+            } else {
+                notes.append("b64fail")
             }
-            let plain = Self.rc4Primed(key, Array(cipher))
-            outResponse = JSONValue.parse(Data(plain))
+
+            if let parsed {
+                outResponse = parsed
+            } else {
+                outError = MiCloudError.diagnostic(notes.joined(separator: "|") + " raw=" + raw)
+            }
         }
         task.resume()
         semaphore.wait()
@@ -230,8 +286,8 @@ struct MiCloudClient {
             "piid": .int(1),
         ])])])
         let resp = try call(path: "/app/miotspec/prop/get", dataObj: params)
-        if let value = Self.extractValue(resp) { return value }
         if let msg = Self.extractError(resp) { throw MiCloudError.api(msg) }
+        if let value = Self.extractValue(resp) { return value }
         throw MiCloudError.badResponse
     }
 
