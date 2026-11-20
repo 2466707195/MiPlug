@@ -215,15 +215,20 @@ enum JSONValue {
     }
 
     static func fromAny(_ any: Any) -> JSONValue {
-        switch any {
-        case is NSNull: return .null
-        case let b as Bool: return .bool(b)
-        case let n as NSNumber:
+        // ⚠️ 必须先判 NSNumber：`NSNumber(0) as? Bool` 在 Swift 里会成功（返回 false），
+        // 如果先走 `case let b as Bool`，JSON 数字 0/1 会被误当 Bool，
+        // 导致 `code: 0` 变成 .bool(false)，extractValue 的 `case .int(let code)` 永远匹配不到
+        // → 写命令成功、读状态永远「云端响应格式异常」。
+        if let n = any as? NSNumber {
             if CFGetTypeID(n) == CFBooleanGetTypeID() { return .bool(n.boolValue) }
-            if n.doubleValue.truncatingRemainder(dividingBy: 1) == 0 && abs(n.doubleValue) < 1e15 {
+            let d = n.doubleValue
+            if d.truncatingRemainder(dividingBy: 1) == 0 && abs(d) < 1e15 {
                 return .int(n.intValue)
             }
-            return .double(n.doubleValue)
+            return .double(d)
+        }
+        switch any {
+        case is NSNull: return .null
         case let s as String: return .string(s)
         case let a as [Any]: return .array(a.map(fromAny))
         case let o as [String: Any]:
