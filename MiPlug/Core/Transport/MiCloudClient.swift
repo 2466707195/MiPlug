@@ -255,7 +255,7 @@ struct MiCloudClient {
                         break
                     }
                     let preview = String(bytes: bytes.prefix(20), encoding: .utf8)?
-                        .filter { $0.isASCII && $0.isPrintable } ?? ""
+                        .filter { $0 >= " " && $0 <= "~" } ?? ""
                     notes.append(tag + "/no:" + preview)
                 }
             } else {
